@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ultraki-ai
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT UltraKI:app
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
