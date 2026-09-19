@@ -1,5 +1,5 @@
-flask
-openai
-python-dotenv
-gunicorn
-werkzeug
+Flask>=3.1,<4
+openai>=1.109,<2
+python-dotenv>=1.0,<2
+gunicorn>=22,<27
+Werkzeug>=3.1,<4
