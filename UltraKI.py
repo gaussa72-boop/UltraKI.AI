@@ -9,11 +9,11 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-only-change-me")
 
-API_KEY = os.getenv("OPENAI_API_KEY")
+API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 client = OpenAI(api_key=API_KEY) if API_KEY else None
 router_client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1") if OPENROUTER_API_KEY else None
-MODEL = os.getenv("OPENAI_MODEL", "openai/gpt-5.6-luna")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6")
 WEB = os.getenv("ENABLE_WEB_SEARCH", "true").lower() == "true"
 AI_ENABLED = os.getenv("AI_ENABLED", "true").lower() == "true"
 MAX_INPUT = max(1000, min(int(os.getenv("MAX_INPUT_CHARS", "12000")), 30000))
@@ -125,7 +125,11 @@ def chat():
         conn.execute("INSERT INTO chats (user_id, role, message) VALUES (?, 'assistant', ?)", (session["user_id"], reply))
         conn.commit()
 
-    return jsonify({"ok":True,"reply":reply,"response":reply,"model":MODEL,"web_search":WEB})
+    return jsonify({"ok":True,"reply":reply,"response":reply,"model":selected_model,"web_search":WEB})
+
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    return chat()
 
 @app.route("/logout")
 def logout():
