@@ -11,7 +11,9 @@ app.secret_key = os.getenv("SECRET_KEY", "dev-only-change-me")
 
 API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=API_KEY) if API_KEY else None
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6")
+router_client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1") if OPENROUTER_API_KEY else None
+MODEL = os.getenv("OPENAI_MODEL", "openai/gpt-5.6-luna")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 WEB = os.getenv("ENABLE_WEB_SEARCH", "true").lower() == "true"
 AI_ENABLED = os.getenv("AI_ENABLED", "true").lower() == "true"
 MAX_INPUT = max(1000, min(int(os.getenv("MAX_INPUT_CHARS", "12000")), 30000))
@@ -85,7 +87,7 @@ def chat():
         return jsonify({"error":"Login nötig"}), 401
 
     data = request.get_json(silent=True) or {}
-    user_input = str(data.get("message") or "").strip()
+    user_input = str(data.get("message") or "").strip()\n    selected_model = str(data.get("model") or MODEL).strip()
     if not user_input:
         return jsonify({"error":"message is required"}), 400
     if len(user_input) > MAX_INPUT:
@@ -105,14 +107,14 @@ def chat():
     else:
         try:
             kwargs = {
-                "model": MODEL,
+                "model": selected_model,
                 "store": False,
                 "input": [{"role":"system","content":SYSTEM}, *history, {"role":"user","content":user_input}],
             }
             if WEB:
                 kwargs["tools"] = [{"type":"web_search","search_context_size":"medium"}]
                 kwargs["tool_choice"] = "auto"
-            response = client.responses.create(**kwargs)
+            active = router_client if (router_client and selected_model) else client\n            response = active.responses.create(**kwargs)
             reply = response.output_text or "Keine Antwort erhalten."
         except Exception:
             app.logger.exception("AI API failure")
