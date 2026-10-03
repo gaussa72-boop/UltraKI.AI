@@ -87,7 +87,8 @@ def chat():
         return jsonify({"error":"Login nötig"}), 401
 
     data = request.get_json(silent=True) or {}
-    user_input = str(data.get("message") or "").strip()\n    selected_model = str(data.get("model") or MODEL).strip()
+    user_input = str(data.get("message") or "").strip()
+    selected_model = str(data.get("model") or MODEL).strip()
     if not user_input:
         return jsonify({"error":"message is required"}), 400
     if len(user_input) > MAX_INPUT:
@@ -102,8 +103,8 @@ def chat():
     history = [{"role": row["role"], "content": row["message"]} for row in reversed(rows)]
     if not AI_ENABLED:
         reply = "Die KI ist derzeit deaktiviert."
-    elif client is None:
-        reply = "OPENAI_API_KEY ist in Render nicht gesetzt."
+    elif client is None and router_client is None:
+        reply = "OPENAI_API_KEY oder OPENROUTER_API_KEY ist in Render nicht gesetzt."
     else:
         try:
             kwargs = {
@@ -114,7 +115,15 @@ def chat():
             if WEB:
                 kwargs["tools"] = [{"type":"web_search","search_context_size":"medium"}]
                 kwargs["tool_choice"] = "auto"
-            active = router_client if (router_client and selected_model) else client\n            response = active.responses.create(**kwargs)
+            active = router_client if (router_client and not selected_model.startswith("openai/")) else client
+            if active is None:
+                raise RuntimeError("Kein KI-Provider konfiguriert.")
+            if active is router_client:
+                kwargs.pop("tools", None)
+                kwargs.pop("tool_choice", None)
+                if selected_model.startswith("openai/"):
+                    kwargs["model"] = selected_model.split("/", 1)[1]
+            response = active.responses.create(**kwargs)
             reply = response.output_text or "Keine Antwort erhalten."
         except Exception:
             app.logger.exception("AI API failure")
@@ -125,7 +134,7 @@ def chat():
         conn.execute("INSERT INTO chats (user_id, role, message) VALUES (?, 'assistant', ?)", (session["user_id"], reply))
         conn.commit()
 
-    return jsonify({"ok":True,"reply":reply,"response":reply,"model":selected_model,"web_search":WEB})
+    return jsonify({"ok":True,"reply":reply,"response":reply,"model":selected_model,"web_search":WEB,"provider":"openrouter" if active is router_client else "openai"})
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
