@@ -1,9 +1,5 @@
-# UltraKI.AI
+# UltraKI.AI — Legacy-Quellprojekt
 
-Flask-basierter UltraKI-Prototyp mit Registrierung, Login, SQLite-Chatverlauf und OpenAI-Anbindung.
+Die konsolidierte Anwendung mit dem führenden kosmischen Interface und den zusammengeführten Konto-/Chat-APIs liegt in [Quantum.KI.Ultra.Pro.V2](https://github.com/gaussa72-boop/Quantum.KI.Ultra.Pro.V2).
 
-## Analyse
-Der vorhandene `UltraKI.py` verweist auf fehlende Templates und enthält unsichere Fallback-Secret-Keys sowie einen zu breiten `except`. Diese Punkte werden in der nächsten Code-Bereinigung behoben. `Design.html` bleibt als Designartefakt erhalten.
-
-## Konfiguration
-`OPENAI_API_KEY` und optional `SECRET_KEY` über Umgebungsvariablen setzen; keine Schlüssel ins Repository schreiben.
+Registrierung, Anmeldung und Bearer-Sitzungen stehen dort unter `/api/auth/*` bereit. Dieses Repository bleibt als Quellhistorie erhalten; es wird nicht mehr als separate Hauptversion empfohlen.
