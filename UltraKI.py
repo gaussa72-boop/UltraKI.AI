@@ -36,6 +36,13 @@ def init_db():
 
 init_db()
 
+@app.before_request
+def redirect_legacy_ui_to_canonical():
+    if request.method == "GET" and not request.path.startswith("/api/") and request.path not in {"/health", "/api/health"}:
+        query = ("?" + request.query_string.decode("utf-8", "ignore")) if request.query_string else ""
+        return redirect("https://quantum-ki-ultra-pro-v2.onrender.com" + request.path + query, code=302)
+
+
 @app.route("/")
 def index():
     return redirect(url_for("dashboard")) if "user_id" in session else redirect(url_for("login"))
